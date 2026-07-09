@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>GermAR: Pengesan Patogen Makanan</title>
+    <title>Germ AR: Pengesan Patogen Makanan</title>
     
     <!-- A-Frame and MindAR Libraries (Offline Local Assets) -->
     <script src="./js/aframe.min.js"></script>
@@ -300,15 +300,15 @@
     <!-- Splash Screen -->
     <div id="splash-screen">
         <img src="./germar_logo.jpg" class="splash-logo" />
-        <h1 class="splash-title">GERMAR AR</h1>
-        <p class="splash-subtitle">Pengesan Patogen & Keselamatan Makanan</p>
+        <h1 class="splash-title">Germ AR</h1>
+        <p class="splash-subtitle">Info Bakteria Penyebab Keracunan Makanan</p>
         <button class="start-btn" onclick="startAR()">MULAKAN</button>
     </div>
 
     <!-- HUD Container -->
     <div id="hud-container">
         <div class="hud-header">
-            <div class="hud-title">GERMAR IMAGING SYSTEM</div>
+            <div class="hud-title">Germ AR IMAGING SYSTEM</div>
         </div>
         <div class="scanner-frame"></div>
     </div>
@@ -387,7 +387,7 @@
 
         <!-- Milk Target -->
         <a-entity mindar-image-target="targetIndex: 3" id="target-milk">
-            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#milkModel"></a-gltf-model>
+            <a-gltf-model rotation="0 90 0" position="0 0 0" scale="0.2 0.2 0.2" src="#milkModel"></a-gltf-model>
         </a-entity>
 
         <!-- Oyster Target -->
@@ -476,7 +476,7 @@
                 if (sceneEl.systems && sceneEl.systems["mindar-image-system"]) {
                     sceneEl.systems["mindar-image-system"].start();
                 } else {
-                    console.error("GermAR: mindar-image-system not found!");
+                    console.error("Germ AR: mindar-image-system not found!");
                 }
             };
 
@@ -519,7 +519,7 @@
                 { id: "target-burger", idx: 0, scale: 0.25, rot: { x: 0, y: 0, z: 0 } },
                 { id: "target-chicken", idx: 1, scale: 0.2, rot: { x: 0, y: 90, z: 0 } },
                 { id: "target-rice", idx: 2, scale: 0.2, rot: { x: 0, y: 0, z: 0 } },
-                { id: "target-milk", idx: 3, scale: 0.2, rot: { x: 0, y: 0, z: 0 } },
+                { id: "target-milk", idx: 3, scale: 0.2, rot: { x: 0, y: 90, z: 0 } },
                 { id: "target-oyster", idx: 4, scale: 0.2, rot: { x: 0, y: 0, z: 0 } },
                 { id: "target-sandwich", idx: 5, scale: 0.2, rot: { x: 0, y: 0, z: 0 } }
             ];
