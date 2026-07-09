@@ -223,7 +223,7 @@
             text-align: center;
             pointer-events: none;
             position: fixed;
-            bottom: 32%; /* Position safely above the sliding sheet */
+            bottom: 120px; /* Position safely above the floating info button */
             left: 50%;
             transform: translateX(-50%);
             z-index: 15;
@@ -234,6 +234,64 @@
         .interaction-hint.active {
             opacity: 1;
             display: block;
+        }
+
+        /* Floating Info Trigger Button */
+        .info-btn {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            border: none;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 14px 28px;
+            border-radius: 30px;
+            box-shadow: 0 8px 25px rgba(255, 75, 43, 0.5);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            z-index: 20;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .info-btn.active {
+            display: flex;
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+            pointer-events: auto;
+        }
+        .info-btn:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        /* Close button inside sheet */
+        .close-sheet-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            z-index: 10;
+        }
+        .close-sheet-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
@@ -260,9 +318,18 @@
         Pusing: Heret 1 Jari | Saiz: Cubit 2 Jari
     </div>
 
+    <!-- Floating Info Trigger Button -->
+    <button id="info-btn" class="info-btn" onclick="openInfoSheet()">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+        </svg>
+        INFO PATOGEN
+    </button>
+
     <!-- Sliding Info Sheet -->
     <div id="info-sheet">
         <div class="sheet-handle"></div>
+        <button class="close-sheet-btn" onclick="closeInfoSheet()">&times;</button>
         <h2 id="pathogen-title" class="pathogen-name">Nama Patogen</h2>
         <div id="food-title" class="food-name">Nama Makanan</div>
         
@@ -310,7 +377,7 @@
 
         <!-- Fried Chicken Target -->
         <a-entity mindar-image-target="targetIndex: 1" id="target-chicken">
-            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#chickenModel"></a-gltf-model>
+            <a-gltf-model rotation="0 90 0" position="0 0 0" scale="0.2 0.2 0.2" src="#chickenModel"></a-gltf-model>
         </a-entity>
 
         <!-- Fried Rice Target -->
@@ -432,16 +499,29 @@
         let lastTouchY = 0;
         
         const hintPill = document.getElementById("interaction-hint");
+        const infoBtn = document.getElementById("info-btn");
+
+        function openInfoSheet() {
+            sheet.classList.add("active");
+            infoBtn.classList.remove("active");
+        }
+
+        function closeInfoSheet() {
+            sheet.classList.remove("active");
+            if (activeModel) {
+                infoBtn.classList.add("active");
+            }
+        }
 
         // Register Target Events dynamically
         document.addEventListener("DOMContentLoaded", () => {
             const targets = [
-                { id: "target-burger", idx: 0, scale: 0.25 },
-                { id: "target-chicken", idx: 1, scale: 0.2 },
-                { id: "target-rice", idx: 2, scale: 0.2 },
-                { id: "target-milk", idx: 3, scale: 0.2 },
-                { id: "target-oyster", idx: 4, scale: 0.2 },
-                { id: "target-sandwich", idx: 5, scale: 0.2 }
+                { id: "target-burger", idx: 0, scale: 0.25, rot: { x: 0, y: 0, z: 0 } },
+                { id: "target-chicken", idx: 1, scale: 0.2, rot: { x: 0, y: 90, z: 0 } },
+                { id: "target-rice", idx: 2, scale: 0.2, rot: { x: 0, y: 0, z: 0 } },
+                { id: "target-milk", idx: 3, scale: 0.2, rot: { x: 0, y: 0, z: 0 } },
+                { id: "target-oyster", idx: 4, scale: 0.2, rot: { x: 0, y: 0, z: 0 } },
+                { id: "target-sandwich", idx: 5, scale: 0.2, rot: { x: 0, y: 0, z: 0 } }
             ];
 
             targets.forEach(t => {
@@ -459,25 +539,27 @@
                     valSymp.innerText = data.symptoms;
                     valCtrl.innerText = data.control;
                     
-                    // Show Sheet and Hint
-                    sheet.classList.add("active");
+                    // Show Button and Hint (Do NOT auto-show full sheet)
+                    infoBtn.classList.add("active");
                     hintPill.classList.add("active");
+                    sheet.classList.remove("active");
 
                     // Set Active Model for Touch Interaction
                     activeModel = el.querySelector("a-gltf-model");
                     baseScale = t.scale;
                     currentScale = t.scale;
-                    currentRotation = { x: 0, y: 0, z: 0 };
+                    currentRotation = { ...t.rot };
                     
-                    // Reset model transforms
+                    // Reset model transforms to default rotation and scale
                     activeModel.setAttribute("scale", `${currentScale} ${currentScale} ${currentScale}`);
-                    activeModel.setAttribute("rotation", "0 0 0");
+                    activeModel.setAttribute("rotation", `${currentRotation.x} ${currentRotation.y} ${currentRotation.z}`);
                 });
 
                 el.addEventListener("targetLost", () => {
                     console.log(`Target ${t.id} Lost!`);
-                    // Hide Sheet and Hint
+                    // Hide Sheet, Button and Hint
                     sheet.classList.remove("active");
+                    infoBtn.classList.remove("active");
                     hintPill.classList.remove("active");
                     
                     if (activeModel === el.querySelector("a-gltf-model")) {
