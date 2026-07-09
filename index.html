@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GermAR: Pengesan Patogen Makanan</title>
+    
+    <!-- A-Frame and MindAR Libraries (Offline Local Assets) -->
+    <script src="./js/aframe.min.js"></script>
+    <script src="./js/mindar-image-aframe.prod.js"></script>
+    
+    <!-- Google Fonts & Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            background-color: #000;
+        }
+
+        /* Fullscreen Splash Screen */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #1a1a2e 0%, #0f0f1b 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.5s ease;
+        }
+        .splash-logo {
+            width: 140px;
+            height: 140px;
+            border-radius: 35px;
+            box-shadow: 0 12px 35px rgba(255, 75, 43, 0.4);
+            margin-bottom: 24px;
+            animation: pulse 2s infinite alternate;
+            object-fit: cover;
+        }
+        .splash-title {
+            color: #fff;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin: 0;
+            text-align: center;
+        }
+        .splash-subtitle {
+            color: #8f90a6;
+            font-size: 16px;
+            font-weight: 400;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .start-btn {
+            margin-top: 40px;
+            padding: 16px 40px;
+            background: linear-gradient(90deg, #ff416c 0%, #ff4b2b 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(255, 75, 43, 0.3);
+            transition: all 0.3s ease;
+        }
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(255, 75, 43, 0.5);
+        }
+
+        /* HUD Scanner UI */
+        #hud-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px;
+        }
+        .hud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .hud-title {
+            background: rgba(15, 15, 27, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            pointer-events: auto;
+        }
+        .scanner-frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            height: 280px;
+            border: 2px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 24px;
+            animation: scanning 4s infinite linear;
+        }
+
+        /* Glassmorphic Sliding Info Sheet */
+        #info-sheet {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            background: rgba(15, 15, 27, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 30px 30px 0 0;
+            padding: 24px 24px 34px 24px;
+            z-index: 20;
+            transition: bottom 0.4s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            color: white;
+            pointer-events: auto;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #info-sheet.active {
+            bottom: 0;
+        }
+        .sheet-handle {
+            width: 50px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            margin: 0 auto 20px auto;
+        }
+        .pathogen-name {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ff416c;
+            margin: 0 0 4px 0;
+        }
+        .food-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffd000;
+            margin: 0 0 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 14px;
+        }
+        .card-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #8f90a6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .card-value {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #e3e4e9;
+        }
+        .card-value-highlight {
+            color: #39e09b;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 10px 30px rgba(255, 75, 43, 0.4); }
+            100% { transform: scale(1.05); box-shadow: 0 15px 40px rgba(255, 75, 43, 0.6); }
+        }
+        @keyframes scanning {
+            0% { border-color: rgba(255, 75, 43, 0.4); }
+            50% { border-color: rgba(57, 224, 155, 0.8); }
+            100% { border-color: rgba(255, 75, 43, 0.4); }
+        }
+
+        /* Floating Interaction Hint */
+        .interaction-hint {
+            background: rgba(15, 15, 27, 0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: #ffd000;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            pointer-events: none;
+            position: fixed;
+            bottom: 32%; /* Position safely above the sliding sheet */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            display: none;
+        }
+        .interaction-hint.active {
+            opacity: 1;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <img src="./germar_logo.jpg" class="splash-logo" />
+        <h1 class="splash-title">GERMAR AR</h1>
+        <p class="splash-subtitle">Pengesan Patogen & Keselamatan Makanan</p>
+        <button class="start-btn" onclick="startAR()">MULAKAN</button>
+    </div>
+
+    <!-- HUD Container -->
+    <div id="hud-container">
+        <div class="hud-header">
+            <div class="hud-title">GERMAR IMAGING SYSTEM</div>
+        </div>
+        <div class="scanner-frame"></div>
+    </div>
+
+    <!-- Interaction Hint Overlay -->
+    <div id="interaction-hint" class="interaction-hint">
+        Pusing: Heret 1 Jari | Saiz: Cubit 2 Jari
+    </div>
+
+    <!-- Sliding Info Sheet -->
+    <div id="info-sheet">
+        <div class="sheet-handle"></div>
+        <h2 id="pathogen-title" class="pathogen-name">Nama Patogen</h2>
+        <div id="food-title" class="food-name">Nama Makanan</div>
+        
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="card-label">Habitat Asal</div>
+                <div id="val-habitat" class="card-value">Maklumat habitat...</div>
+            </div>
+            <div class="info-card">
+                <div class="card-label">Cara Pemindahan</div>
+                <div id="val-pemindahan" class="card-value">Maklumat cara pemindahan...</div>
+            </div>
+            <div class="info-card">
+                <div class="card-label">Simptom & Tanda</div>
+                <div id="val-tanda" class="card-value">Maklumat simptom...</div>
+            </div>
+            <div class="info-card">
+                <div class="card-label">Cara Kawalan & Pencegahan</div>
+                <div id="val-kawalan" class="card-value card-value-highlight">Maklumat pencegahan...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AR Scene (MindAR + A-Frame) -->
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; filterMinCF:0.001; filterBeta: 10;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+        <a-assets>
+            <a-asset-item id="burgerModel" src="./models/Burger.glb"></a-asset-item>
+            <a-asset-item id="chickenModel" src="./models/Fried_Chicken.glb"></a-asset-item>
+            <a-asset-item id="riceModel" src="./models/Fried_Rice.glb"></a-asset-item>
+            <a-asset-item id="milkModel" src="./models/Milk.glb"></a-asset-item>
+            <a-asset-item id="oysterModel" src="./models/Oyster.glb"></a-asset-item>
+            <a-asset-item id="sandwichModel" src="./models/Sandwich.glb"></a-asset-item>
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <!-- Lights -->
+        <a-light type="ambient" color="#fff" intensity="0.8"></a-light>
+        <a-light type="directional" color="#fff" intensity="0.5" position="1 2 1"></a-light>
+
+        <!-- Burger Marker Target -->
+        <a-entity mindar-image-target="targetIndex: 0" id="target-burger">
+            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.25 0.25 0.25" src="#burgerModel"></a-gltf-model>
+        </a-entity>
+
+        <!-- Fried Chicken Target -->
+        <a-entity mindar-image-target="targetIndex: 1" id="target-chicken">
+            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#chickenModel"></a-gltf-model>
+        </a-entity>
+
+        <!-- Fried Rice Target -->
+        <a-entity mindar-image-target="targetIndex: 2" id="target-rice">
+            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#riceModel"></a-gltf-model>
+        </a-entity>
+
+        <!-- Milk Target -->
+        <a-entity mindar-image-target="targetIndex: 3" id="target-milk">
+            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#milkModel"></a-gltf-model>
+        </a-entity>
+
+        <!-- Oyster Target -->
+        <a-entity mindar-image-target="targetIndex: 4" id="target-oyster">
+            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#oysterModel"></a-gltf-model>
+        </a-entity>
+
+        <!-- Sandwich Target -->
+        <a-entity mindar-image-target="targetIndex: 5" id="target-sandwich">
+            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#sandwichModel"></a-gltf-model>
+        </a-entity>
+    </a-scene>
+
+    <script>
+        // Database
+        const pathogenDb = {
+            0: {
+                name: "Escherichia coli enteropathogenic",
+                food: "Burger Daging",
+                habitat: "Saluran pencernaan lembu dan haiwan ternakan lain.",
+                transfer: "Penggunaan daging lembu kisar yang tidak dimasak sepenuhnya atau air tercemar najis.",
+                symptoms: "Cirit-birit berdarah yang teruk, kekejangan perut yang menyakitkan, dan muntah-muntah.",
+                control: "Pastikan daging burger dimasak sepenuhnya sehingga tiada bahagian merah jambu, dan amalkan kebersihan tangan."
+            },
+            1: {
+                name: "Salmonella",
+                food: "Ayam Goreng",
+                habitat: "Saluran usus manusia dan haiwan, sering mencemari daging ayam mentah dan telur.",
+                transfer: "Penggunaan daging ayam yang tidak dimasak dengan sempurna atau pencemaran silang melalui papan pemotong.",
+                symptoms: "Demam, kekejangan perut, cirit-birit, dan muntah-muntah (bermula 6 hingga 72 jam selepas jangkitan).",
+                control: "Masak daging ayam sehingga suhu dalaman mencapai sekurang-kurangnya 74°C dan elakkan pencemaran silang."
+            },
+            2: {
+                name: "Bacillus cereus",
+                food: "Nasi Goreng",
+                habitat: "Tanah, habuk, dan spora yang melekat pada beras mentah.",
+                transfer: "Membiarkan nasi yang telah dimasak pada suhu bilik terlalu lama, membolehkan spora membiak dan menghasilkan toksin.",
+                symptoms: "Muntah-muntah (jenis emetik) dalam masa 1-5 jam, atau cirit-birit (jenis diarea) dalam masa 6-15 jam.",
+                control: "Simpan nasi yang berlebihan di dalam peti sejuk segera (bawah 5°C) dan panaskan semula dengan secukupnya sebelum makan."
+            },
+            3: {
+                name: "Campylobacter",
+                food: "Susu Mentah",
+                habitat: "Saluran usus burung dan mamalia, terutamanya ayam itik dan lembu susu.",
+                transfer: "Memimum susu lembu mentah yang tidak melalui proses pempasteuran.",
+                symptoms: "Cirit-birit (sering berdarah), demam, kekejangan perut yang teruk, dan sakit kepala (bermula 2 hingga 5 hari).",
+                control: "Hanya minum susu yang telah dipasteur atau dididihkan, dan simpan susu pada suhu bawah 4°C."
+            },
+            4: {
+                name: "Vibrio Parahaemolyticus",
+                food: "Tiram",
+                habitat: "Persekitaran laut dan air payau, terkumpul di dalam tisu tiram.",
+                transfer: "Memakan tiram atau kerang-kerangan mentah yang tercemar atau tidak dimasak dengan betul.",
+                symptoms: "Cirit-birit berair, kejang perut, loya, muntah, demam, dan menggigil.",
+                control: "Sentiasa masak tiram sehingga cengkerang terbuka sepenuhnya dan masak selama 3-5 minit lagi. Elakkan memakan tiram mentah."
+            },
+            5: {
+                name: "Staphylococcus aureus",
+                food: "Sandwic",
+                habitat: "Kulit dan rongga hidung manusia (sering dipindahkan oleh penyedia makanan).",
+                transfer: "Penyediaan sandwic dengan tangan yang tidak bersih, diikuti dengan penyimpanan pada suhu bilik.",
+                symptoms: "Loya yang teruk, muntah-muntah yang mendadak, kejang perut, dan cirit-birit (bermula 30 minit hingga 8 jam).",
+                control: "Basuh tangan dengan sabun sebelum menyediakan makanan, gunakan sarung tangan, dan jangan sediakan makanan jika ada luka di tangan."
+            }
+        };
+
+        // UI Selectors
+        const sheet = document.getElementById("info-sheet");
+        const titlePat = document.getElementById("pathogen-title");
+        const titleFood = document.getElementById("food-title");
+        const valHab = document.getElementById("val-habitat");
+        const valTrans = document.getElementById("val-pemindahan");
+        const valSymp = document.getElementById("val-tanda");
+        const valCtrl = document.getElementById("val-kawalan");
+
+        function startAR() {
+            // Hide splash screen
+            document.getElementById("splash-screen").style.opacity = 0;
+            setTimeout(() => {
+                document.getElementById("splash-screen").style.display = "none";
+            }, 500);
+
+            // Start A-Scene AR System safely
+            const sceneEl = document.querySelector('a-scene');
+            const startSystem = () => {
+                if (sceneEl.systems && sceneEl.systems["mindar-image-system"]) {
+                    sceneEl.systems["mindar-image-system"].start();
+                } else {
+                    console.error("GermAR: mindar-image-system not found!");
+                }
+            };
+
+            if (sceneEl.hasLoaded) {
+                startSystem();
+            } else {
+                sceneEl.addEventListener("loaded", startSystem);
+            }
+        }
+
+        // Global variables for Touch Interaction
+        let activeModel = null;
+        let baseScale = 0.2;
+        let currentScale = 0.2;
+        let currentRotation = { x: 0, y: 0, z: 0 };
+        
+        let touchStartDist = 0;
+        let touchStartScale = 0.2;
+        let lastTouchX = 0;
+        let lastTouchY = 0;
+        
+        const hintPill = document.getElementById("interaction-hint");
+
+        // Register Target Events dynamically
+        document.addEventListener("DOMContentLoaded", () => {
+            const targets = [
+                { id: "target-burger", idx: 0, scale: 0.25 },
+                { id: "target-chicken", idx: 1, scale: 0.2 },
+                { id: "target-rice", idx: 2, scale: 0.2 },
+                { id: "target-milk", idx: 3, scale: 0.2 },
+                { id: "target-oyster", idx: 4, scale: 0.2 },
+                { id: "target-sandwich", idx: 5, scale: 0.2 }
+            ];
+
+            targets.forEach(t => {
+                const el = document.getElementById(t.id);
+                
+                el.addEventListener("targetFound", () => {
+                    console.log(`Target ${t.id} Found!`);
+                    const data = pathogenDb[t.idx];
+                    
+                    // Populate UI
+                    titlePat.innerText = data.name;
+                    titleFood.innerText = data.food;
+                    valHab.innerText = data.habitat;
+                    valTrans.innerText = data.transfer;
+                    valSymp.innerText = data.symptoms;
+                    valCtrl.innerText = data.control;
+                    
+                    // Show Sheet and Hint
+                    sheet.classList.add("active");
+                    hintPill.classList.add("active");
+
+                    // Set Active Model for Touch Interaction
+                    activeModel = el.querySelector("a-gltf-model");
+                    baseScale = t.scale;
+                    currentScale = t.scale;
+                    currentRotation = { x: 0, y: 0, z: 0 };
+                    
+                    // Reset model transforms
+                    activeModel.setAttribute("scale", `${currentScale} ${currentScale} ${currentScale}`);
+                    activeModel.setAttribute("rotation", "0 0 0");
+                });
+
+                el.addEventListener("targetLost", () => {
+                    console.log(`Target ${t.id} Lost!`);
+                    // Hide Sheet and Hint
+                    sheet.classList.remove("active");
+                    hintPill.classList.remove("active");
+                    
+                    if (activeModel === el.querySelector("a-gltf-model")) {
+                        activeModel = null;
+                    }
+                });
+            });
+        });
+
+        // Touch event handlers for rotation and pinch-to-zoom
+        window.addEventListener("touchstart", (e) => {
+            if (!activeModel) return;
+            
+            if (e.touches.length === 1) {
+                lastTouchX = e.touches[0].clientX;
+                lastTouchY = e.touches[0].clientY;
+            } else if (e.touches.length === 2) {
+                touchStartDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                touchStartScale = currentScale;
+            }
+        });
+        
+        window.addEventListener("touchmove", (e) => {
+            if (!activeModel) return;
+            
+            if (e.touches.length === 1) {
+                // One finger drag: rotate model (Y axis: left/right drag, X axis: up/down drag)
+                const deltaX = e.touches[0].clientX - lastTouchX;
+                const deltaY = e.touches[0].clientY - lastTouchY;
+                
+                currentRotation.y += deltaX * 0.4;
+                currentRotation.x += deltaY * 0.4;
+                
+                activeModel.setAttribute("rotation", `${currentRotation.x} ${currentRotation.y} 0`);
+                
+                lastTouchX = e.touches[0].clientX;
+                lastTouchY = e.touches[0].clientY;
+            } else if (e.touches.length === 2) {
+                // Two fingers pinch: resize model
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                
+                if (touchStartDist > 0) {
+                    const factor = dist / touchStartDist;
+                    // Clamp scale between 0.05x (min) and 1.5x (max)
+                    currentScale = Math.max(0.05, Math.min(1.5, touchStartScale * factor));
+                    activeModel.setAttribute("scale", `${currentScale} ${currentScale} ${currentScale}`);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
