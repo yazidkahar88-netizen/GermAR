@@ -226,17 +226,24 @@
             text-align: center;
             pointer-events: none;
             position: fixed;
-            bottom: 120px; /* Position safely above the floating info button */
+            bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 15;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, top 0.4s ease, bottom 0.4s ease, left 0.4s ease;
             opacity: 0;
             display: none;
+            white-space: nowrap;
         }
         .interaction-hint.active {
             opacity: 1;
             display: block;
+        }
+
+        /* Portrait: apabila panel maklumat terbuka, petunjuk naik ke atas */
+        body.sheet-open .interaction-hint {
+            bottom: auto;
+            top: 16px;
         }
 
         /* Floating Info Trigger Button */
@@ -320,6 +327,27 @@
             .sheet-handle {
                 display: none;
             }
+
+            /* Landscape + panel terbuka: petunjuk ke atas kiri kawasan kamera (55%) */
+            body.sheet-open .interaction-hint {
+                bottom: auto;
+                top: 16px;
+                left: 27.5%;
+                font-size: 12px;
+                padding: 8px 14px;
+            }
+
+            /* Landscape + panel terbuka: butang maklumat ke bawah kiri kawasan kamera */
+            body.sheet-open .info-btn {
+                left: 27.5%;
+                bottom: 20px;
+            }
+            body.sheet-open .info-btn.active {
+                transform: translateX(-50%) scale(1);
+            }
+            body.sheet-open .info-btn:active {
+                transform: translateX(-50%) scale(0.95);
+            }
         }
     </style>
 </head>
@@ -381,12 +409,12 @@
     <!-- AR Scene (MindAR + A-Frame) -->
     <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; filterMinCF:0.001; filterBeta: 10;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         <a-assets>
-            <a-asset-item id="burgerModel" src="./models/Burger.glb"></a-asset-item>
-            <a-asset-item id="chickenModel" src="./models/Fried_Chicken.glb"></a-asset-item>
-            <a-asset-item id="riceModel" src="./models/Fried_Rice.glb"></a-asset-item>
-            <a-asset-item id="milkModel" src="./models/Milk.glb"></a-asset-item>
+            <a-asset-item id="susuModel" src="./models/Susu.glb"></a-asset-item>
             <a-asset-item id="oysterModel" src="./models/Oyster.glb"></a-asset-item>
-            <a-asset-item id="sandwichModel" src="./models/Sandwich.glb"></a-asset-item>
+            <a-asset-item id="chickenModel" src="./models/Ayam_Masak_Merah.glb"></a-asset-item>
+            <a-asset-item id="laksaModel" src="./models/Laksa.glb"></a-asset-item>
+            <a-asset-item id="kerabuModel" src="./models/Kerabu_Kaki_Ayam.glb"></a-asset-item>
+            <a-asset-item id="serimukaModel" src="./models/Kuih_Seri_Muka.glb"></a-asset-item>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -395,34 +423,34 @@
         <a-light type="ambient" color="#fff" intensity="0.8"></a-light>
         <a-light type="directional" color="#fff" intensity="0.5" position="1 2 1"></a-light>
 
-        <!-- Burger Marker Target -->
-        <a-entity mindar-image-target="targetIndex: 0" id="target-burger">
-            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.25 0.25 0.25" src="#burgerModel"></a-gltf-model>
+        <!-- Ayam Masak Merah Target -->
+        <a-entity mindar-image-target="targetIndex: 0" id="target-chicken">
+            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#chickenModel"></a-gltf-model>
         </a-entity>
 
-        <!-- Fried Chicken Target -->
-        <a-entity mindar-image-target="targetIndex: 1" id="target-chicken">
-            <a-gltf-model rotation="0 90 0" position="0 0 0" scale="0.2 0.2 0.2" src="#chickenModel"></a-gltf-model>
+        <!-- Kerabu Kaki Ayam Target -->
+        <a-entity mindar-image-target="targetIndex: 1" id="target-kerabu">
+            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.25 0.25 0.25" src="#kerabuModel"></a-gltf-model>
         </a-entity>
 
-        <!-- Fried Rice Target -->
-        <a-entity mindar-image-target="targetIndex: 2" id="target-rice">
-            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#riceModel"></a-gltf-model>
+        <!-- Kuih Seri Muka Target -->
+        <a-entity mindar-image-target="targetIndex: 2" id="target-serimuka">
+            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#serimukaModel"></a-gltf-model>
         </a-entity>
 
-        <!-- Milk Target -->
-        <a-entity mindar-image-target="targetIndex: 3" id="target-milk">
-            <a-gltf-model rotation="0 90 0" position="0 0 0" scale="0.2 0.2 0.2" src="#milkModel"></a-gltf-model>
+        <!-- Laksa Target -->
+        <a-entity mindar-image-target="targetIndex: 3" id="target-laksa">
+            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#laksaModel"></a-gltf-model>
+        </a-entity>
+
+        <!-- Susu Target -->
+        <a-entity mindar-image-target="targetIndex: 4" id="target-susu">
+            <a-gltf-model rotation="0 90 0" position="0 0 0" scale="0.2 0.2 0.2" src="#susuModel"></a-gltf-model>
         </a-entity>
 
         <!-- Oyster Target -->
-        <a-entity mindar-image-target="targetIndex: 4" id="target-oyster">
+        <a-entity mindar-image-target="targetIndex: 5" id="target-oyster">
             <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#oysterModel"></a-gltf-model>
-        </a-entity>
-
-        <!-- Sandwich Target -->
-        <a-entity mindar-image-target="targetIndex: 5" id="target-sandwich">
-            <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.2 0.2 0.2" src="#sandwichModel"></a-gltf-model>
         </a-entity>
     </a-scene>
 
@@ -430,52 +458,52 @@
         // Database
         const pathogenDb = {
             0: {
-                name: "Escherichia coli enteropathogenic",
-                food: "Burger Daging",
-                habitat: "Najis.",
-                transfer: "Melalui memakan makanan mentah atau makanan yang tidak dimasak dengan sempurna dan air atau makanan yang telah dicemari oleh najis.",
-                symptoms: "Cirit-birit, sakit perut yang amat sangat, muntah-muntah, loya dan cirit-birit berdarah. Jangkitan boleh menyebabkan kematian dan komplikasi seperti Haemolytic Uraemic Syndrome (HUS) / radang pada usus besar terutamanya kepada kanak-kanak dan orang tua. [Tempoh inkubasi: 6 jam - 3 hari (biasa 10-15 jam)]",
-                control: "Masak daging secukupnya (lebih 75°C), gunakan air yang bersih, dan masak makanan dengan sempurna."
-            },
-            1: {
-                name: "Salmonella",
-                food: "Ayam Goreng",
-                habitat: "Haiwan peliharaan (anjing dan kucing), haiwan liar, tikus, lalat dan lipas.",
-                transfer: "Makanan yang terdedah kepada pencemaran silang, pengendali yang dicemari haiwan peliharaan (tangan ke mulut), atau pencemaran silang dari makanan dan daging mentah yang telah dimasak semasa penyediaan atau penyimpanan.",
-                symptoms: "Cirit-birit, sakit perut dan abdomen, muntah, loya dan demam. [Tempoh inkubasi: 6-72 jam (biasa 12-36 jam)]",
-                control: "Elakkan memakan daging mentah/kurang masak, masak daging/ayam/telur dengan sempurna (lebih 75°C), simpan makanan mentah dan dimasak secara berasingan, serta gunakan alatan memotong berasingan."
-            },
-            2: {
-                name: "Bacillus cereus",
-                food: "Nasi Goreng",
-                habitat: "Persekitaran dan tanah.",
-                transfer: "Penyimpanan makanan yang tidak sempurna (disimpan pada suhu bilik terlalu lama / lebih daripada 4 jam) atau makanan yang dipanaskan semula tidak dimasak secukupnya.",
-                symptoms: "Loya dan muntah dengan / tanpa cirit-birit, sakit pada abdomen. [Tempoh inkubasi: 1-6 jam (biasa 1-3 jam) atau 6-24 jam (biasa 10-12 jam)]",
-                control: "Makanan yang hendak dipanaskan semula mestilah dimasak semula secukupnya, simpan makanan yang berlebihan dalam peti sejuk, dan jangan dedahkan makanan yang telah dimasak lebih dari 4 jam pada suhu bilik."
-            },
-            3: {
                 name: "Campylobacter",
                 food: "Susu Mentah",
-                habitat: "Haiwan peliharaan, lembu, ayam, itik, burung dan air yang tercemar.",
-                transfer: "Makanan yang tidak dimasak secukupnya, air yang tidak bersih, atau pencemaran silang dari makanan dan daging mentah ke makanan yang telah dimasak.",
-                symptoms: "Cirit-birit (biasanya berdarah), sakit perut yang teruk, pening dan muntah. [Tempoh inkubasi: 1-10 hari (biasa 2-5 hari)]",
-                control: "Elakkan pencemaran silang, simpan ayam/daging mentah berasingan dari makanan yang telah dimasak, dan masak daging/ayam dengan sempurna."
+                habitat: "Lembu, ayam, itik, burung, haiwan peliharaan & air tercemar.",
+                transfer: "Memakan makanan kurang masak, air tercemar atau pencemaran silang dari daging mentah.",
+                symptoms: "Cirit-birit (biasanya berdarah), sakit perut yang teruk, pening & muntah. [Inkubasi: 2-5 hari]",
+                control: "Asingkan daging mentah daripada makanan masak, serta masak dengan sempurna."
             },
-            4: {
+            1: {
                 name: "Vibrio Parahaemolyticus",
                 food: "Tiram",
-                habitat: "Membiak secara optimum dalam kepekatan air garam 2-5%. Pembiakan cepat dan pantas. Sumber: Laut.",
-                transfer: "Berlaku apabila bakteria daripada makanan laut mentah berpindah kepada makanan masak apabila bersentuhan secara langsung (pencemaran silang).",
-                symptoms: "Cirit-birit (berair), sakit perut dan kejang pada abdomen, muntah dan demam. [Tempoh inkubasi: 4-30 jam (biasa 12-24 jam)]",
-                control: "Masak makanan laut dengan sempurna, membasuh ikan/makanan laut dengan air bersih, serta simpan makanan mentah dan makanan yang telah dimasak secara berasingan."
+                habitat: "Persekitaran laut (air masin). Pembiakan sangat cepat.",
+                transfer: "Pencemaran silang daripada makanan laut mentah ke makanan siap masak.",
+                symptoms: "Cirit-birit berair, sakit perut, kejang abdomen, muntah & demam. [Inkubasi: 12-24 jam]",
+                control: "Masak makanan laut dengan sempurna & basuh menggunakan air bersih."
+            },
+            2: {
+                name: "Salmonella",
+                food: "Ayam Masak Merah",
+                habitat: "Haiwan peliharaan, tikus, lalat, lipas & daging mentah.",
+                transfer: "Pencemaran silang dari daging mentah, peralatan kotor, atau pengendali tercemar.",
+                symptoms: "Cirit-birit, sakit perut, muntah, loya & demam. [Inkubasi: 12-36 jam]",
+                control: "Masak ayam/telur sepenuhnya (>75°C) & asingkan peralatan mentah/masak."
+            },
+            3: {
+                name: "Staphylococcus aureus",
+                food: "Laksa",
+                habitat: "Manusia & haiwan (kulit, hidung, telinga, bisul/luka bernanah).",
+                transfer: "Kebersihan diri pengendali yang lemah atau makanan dibiarkan di suhu bilik melebihi 4 jam.",
+                symptoms: "Loya, muntah teruk, sakit perut & cirit-birit. [Inkubasi: 2-4 jam]",
+                control: "Individu sakit/luka dilarang menyediakan makanan & cuci tangan dengan sabun."
+            },
+            4: {
+                name: "Escherichia coli",
+                food: "Kerabu Kaki Ayam",
+                habitat: "Najis manusia dan haiwan.",
+                transfer: "Makanan/air yang tercemar dengan najis atau kurang masak.",
+                symptoms: "Cirit-birit berdarah, sakit perut yang amat sangat & muntah. Boleh bawa maut. [Inkubasi: 10-15 jam]",
+                control: "Masak makanan secukupnya (>75°C) & sentiasa gunakan air bersih."
             },
             5: {
-                name: "Staphylococcus aureus",
-                food: "Sandwic",
-                habitat: "Sumber daripada manusia dan haiwan. Biasanya terdapat pada hidung, telinga, kulit, luka bernanah, bisul/kudis pada manusia/binatang, dan tahi lembu. Bakteria mengeluarkan racun enterotoksin yang sangat tahan suhu tinggi.",
-                transfer: "Makanan dicemari oleh pengendali makanan yang tidak mengamalkan kebersihan diri yang baik atau penyimpanan makanan yang tidak sempurna pada suhu bilik (lebih dari 4 jam).",
-                symptoms: "Loya, muntah-muntah, sakit perut dan cirit-birit. [Tempoh inkubasi: 1-8 jam (biasa 2-4 jam)]",
-                control: "Individu yang mempunyai luka di tangan/sakit harus dielakkan dari mengendali makanan. Pengendali makanan perlu membasuh tangan sebelum menyediakan makanan."
+                name: "Bacillus cereus",
+                food: "Kuih Seri Muka",
+                habitat: "Persekitaran, debu & tanah.",
+                transfer: "Makanan masak dibiarkan di suhu bilik melebihi 4 jam atau dipanaskan kurang sempurna.",
+                symptoms: "Loya, muntah & cirit-birit. [Inkubasi: 1-6 jam (muntah) atau 6-24 jam (cirit-birit)]",
+                control: "Simpan baki makanan dalam peti sejuk & panaskan semula dengan sempurna."
             }
         };
 
@@ -585,12 +613,12 @@
         // Register Target Events dynamically
         document.addEventListener("DOMContentLoaded", () => {
             const targets = [
-                { id: "target-burger", idx: 0, scale: 0.25, rot: { x: 0, y: 0, z: 0 } },
-                { id: "target-chicken", idx: 1, scale: 0.2, rot: { x: 0, y: 90, z: 0 } },
-                { id: "target-rice", idx: 2, scale: 0.2, rot: { x: 0, y: 0, z: 0 } },
-                { id: "target-milk", idx: 3, scale: 0.2, rot: { x: 0, y: 90, z: 0 } },
-                { id: "target-oyster", idx: 4, scale: 0.2, rot: { x: 0, y: 0, z: 0 } },
-                { id: "target-sandwich", idx: 5, scale: 0.2, rot: { x: 0, y: 0, z: 0 } }
+                { id: "target-chicken", idx: 2, scale: 0.2, rot: { x: 0, y: 0, z: 0 } },
+                { id: "target-kerabu", idx: 4, scale: 0.25, rot: { x: 0, y: 0, z: 0 } },
+                { id: "target-serimuka", idx: 5, scale: 0.2, rot: { x: 0, y: 0, z: 0 } },
+                { id: "target-laksa", idx: 3, scale: 0.2, rot: { x: 0, y: 0, z: 0 } },
+                { id: "target-susu", idx: 0, scale: 0.2, rot: { x: 0, y: 90, z: 0 } },
+                { id: "target-oyster", idx: 1, scale: 0.2, rot: { x: 0, y: 0, z: 0 } }
             ];
 
             targets.forEach(t => {
