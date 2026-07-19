@@ -32,7 +32,10 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: radial-gradient(circle, #1a1a2e 0%, #0f0f1b 100%);
+            background-image: linear-gradient(rgba(10, 10, 18, 0.65), rgba(10, 10, 18, 0.85)), url('malaysian_food_bg.jpg');
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -126,13 +129,12 @@
             animation: scanning 4s infinite linear;
         }
 
-        /* Glassmorphic Sliding Info Sheet */
         #info-sheet {
             position: fixed;
             bottom: -100%;
             left: 0;
             width: 100%;
-            background: rgba(15, 15, 27, 0.85);
+            background: rgba(15, 15, 27, 0.92);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.15);
@@ -143,7 +145,8 @@
             box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
             color: white;
             pointer-events: auto;
-            max-height: 80vh;
+            max-height: 50vh;
+            height: 50vh;
             overflow-y: auto;
         }
         #info-sheet.active {
@@ -293,13 +296,38 @@
         .close-sheet-btn:hover {
             background: rgba(255, 255, 255, 0.2);
         }
+
+        /* Responsive Landscape Layout */
+        @media (orientation: landscape) {
+            #info-sheet {
+                top: 0;
+                right: -55%;
+                bottom: auto;
+                left: auto;
+                width: 45%;
+                height: 100vh;
+                max-height: 100vh;
+                border-left: 1px solid rgba(255, 255, 255, 0.15);
+                border-top: none;
+                border-radius: 30px 0 0 30px;
+                padding: 30px 24px 34px 24px;
+                transition: right 0.4s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+            }
+            #info-sheet.active {
+                right: 0;
+                bottom: auto;
+            }
+            .sheet-handle {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
 
     <!-- Splash Screen -->
     <div id="splash-screen">
-        <img src="./germar_logo.jpg" class="splash-logo" />
+        <img src="germar_logo.jpg" class="splash-logo" />
         <h1 class="splash-title">Germ AR</h1>
         <p class="splash-subtitle">Info Bakteria Penyebab Keracunan Makanan</p>
         <button class="start-btn" onclick="startAR()">MULAKAN</button>
@@ -307,15 +335,12 @@
 
     <!-- HUD Container -->
     <div id="hud-container">
-        <div class="hud-header">
-            <div class="hud-title">Germ AR IMAGING SYSTEM</div>
-        </div>
         <div class="scanner-frame"></div>
     </div>
 
     <!-- Interaction Hint Overlay -->
     <div id="interaction-hint" class="interaction-hint">
-        Pusing: Heret 1 Jari | Saiz: Cubit 2 Jari
+        Putar: Seret 1 Jari &nbsp;|&nbsp; Zum: Cubit 2 Jari
     </div>
 
     <!-- Floating Info Trigger Button -->
@@ -323,7 +348,7 @@
         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
         </svg>
-        INFO PATOGEN
+        MAKLUMAT PATOGEN
     </button>
 
     <!-- Sliding Info Sheet -->
@@ -336,19 +361,19 @@
         <div class="info-grid">
             <div class="info-card">
                 <div class="card-label">Habitat Asal</div>
-                <div id="val-habitat" class="card-value">Maklumat habitat...</div>
+                <div id="val-habitat" class="card-value">Memuatkan maklumat...</div>
             </div>
             <div class="info-card">
-                <div class="card-label">Cara Pemindahan</div>
-                <div id="val-pemindahan" class="card-value">Maklumat cara pemindahan...</div>
+                <div class="card-label">Cara Penularan</div>
+                <div id="val-pemindahan" class="card-value">Memuatkan maklumat...</div>
             </div>
             <div class="info-card">
-                <div class="card-label">Simptom & Tanda</div>
-                <div id="val-tanda" class="card-value">Maklumat simptom...</div>
+                <div class="card-label">Simptom &amp; Tanda</div>
+                <div id="val-tanda" class="card-value">Memuatkan maklumat...</div>
             </div>
             <div class="info-card">
-                <div class="card-label">Cara Kawalan & Pencegahan</div>
-                <div id="val-kawalan" class="card-value card-value-highlight">Maklumat pencegahan...</div>
+                <div class="card-label">Kawalan &amp; Pencegahan</div>
+                <div id="val-kawalan" class="card-value card-value-highlight">Memuatkan maklumat...</div>
             </div>
         </div>
     </div>
@@ -487,6 +512,37 @@
             }
         }
 
+        // Restart MindAR when screen orientation changes (landscape <-> portrait)
+        let arRestartTimeout = null;
+        function restartMindAR() {
+            const sceneEl = document.querySelector('a-scene');
+            if (!sceneEl || !sceneEl.systems || !sceneEl.systems['mindar-image-system']) return;
+            // Only restart if AR has been started (splash is hidden)
+            if (document.getElementById('splash-screen').style.display === 'none') {
+                const sys = sceneEl.systems['mindar-image-system'];
+                clearTimeout(arRestartTimeout);
+                arRestartTimeout = setTimeout(() => {
+                    try {
+                        sys.stop();
+                        setTimeout(() => sys.start(), 600);
+                    } catch(e) { console.log('AR restart error:', e); }
+                }, 300);
+            }
+        }
+        // Listen to both orientationchange and resize for maximum compatibility
+        window.addEventListener('orientationchange', restartMindAR);
+        screen.orientation && screen.orientation.addEventListener('change', restartMindAR);
+        // Debounced resize for browsers that don't fire orientationchange
+        let resizeTimer = null;
+        let lastW = window.innerWidth;
+        window.addEventListener('resize', () => {
+            // Only restart if width changed significantly (orientation flip)
+            if (Math.abs(window.innerWidth - lastW) > 100) {
+                lastW = window.innerWidth;
+                restartMindAR();
+            }
+        });
+
         // Global variables for Touch Interaction
         let activeModel = null;
         let baseScale = 0.2;
@@ -503,14 +559,27 @@
 
         function openInfoSheet() {
             sheet.classList.add("active");
+            document.body.classList.add("sheet-open");
             infoBtn.classList.remove("active");
         }
 
         function closeInfoSheet() {
             sheet.classList.remove("active");
+            document.body.classList.remove("sheet-open");
             if (activeModel) {
                 infoBtn.classList.add("active");
             }
+        }
+
+        // Dipanggil oleh butang Back Android melalui Java
+        // Mengembalikan true jika panel info berjaya ditutup (Java tidak perlu buat apa-apa)
+        // Mengembalikan false jika panel tiada — Java akan minimumkan apps
+        function androidBackPressed() {
+            if (sheet.classList.contains('active')) {
+                closeInfoSheet();
+                return true;
+            }
+            return false;
         }
 
         // Register Target Events dynamically
@@ -544,6 +613,9 @@
                     hintPill.classList.add("active");
                     sheet.classList.remove("active");
 
+                    // Sembunyi kotak scanner apabila model ditemui
+                    document.querySelector('.scanner-frame').style.opacity = '0';
+
                     // Set Active Model for Touch Interaction
                     activeModel = el.querySelector("a-gltf-model");
                     baseScale = t.scale;
@@ -557,10 +629,14 @@
 
                 el.addEventListener("targetLost", () => {
                     console.log(`Target ${t.id} Lost!`);
-                    // Hide Sheet, Button and Hint
+                    // Sembunyikan Panel, Butang dan Petunjuk
                     sheet.classList.remove("active");
+                    document.body.classList.remove("sheet-open");
                     infoBtn.classList.remove("active");
                     hintPill.classList.remove("active");
+
+                    // Paparkan semula kotak scanner apabila model hilang
+                    document.querySelector('.scanner-frame').style.opacity = '1';
                     
                     if (activeModel === el.querySelector("a-gltf-model")) {
                         activeModel = null;
@@ -569,9 +645,12 @@
             });
         });
 
-        // Touch event handlers for rotation and pinch-to-zoom
+        // Pengatur sentuhan untuk putar dan zum model 3D
+        // (diabaikan jika sentuhan bermula dalam panel maklumat)
         window.addEventListener("touchstart", (e) => {
             if (!activeModel) return;
+            // Jika jari menyentuh panel maklumat, abaikan — biarkan panel menatal
+            if (e.target.closest('#info-sheet')) return;
             
             if (e.touches.length === 1) {
                 lastTouchX = e.touches[0].clientX;
@@ -587,6 +666,8 @@
         
         window.addEventListener("touchmove", (e) => {
             if (!activeModel) return;
+            // Jika jari menggeser dalam panel maklumat, abaikan — biarkan panel menatal
+            if (e.target.closest('#info-sheet')) return;
             
             if (e.touches.length === 1) {
                 // One finger drag: rotate model (Y axis: left/right drag, X axis: up/down drag)
